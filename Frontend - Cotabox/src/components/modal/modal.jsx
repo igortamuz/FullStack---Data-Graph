@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ModalOverlay, ModalContainer, ModalHeader, ModalBody, ModalFooter, Label, Button, Input, ButtonCloseModal, TitleModal, SpinnerIcon } from './styled';
+import { ModalOverlay, ModalContainer, ModalHeader, ModalBody, ModalFooter, Label, Button, Input, ButtonCloseModal, TitleModal, SpinnerIcon, FloatingMessage } from './styled';
 import useUpdateParticipation from '../../hooks/updateParticipation';
 
-const EditModal = ({ isOpen, onClose, onSave, initialData }) => {
+const EditModal = ({ isOpen, onClose, onSave, initialData, totalParticipation }) => {
   const [formData, setFormData] = useState(initialData);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   const updateParticipation = useUpdateParticipation();
 
-  //useEffects
+  // useEffects
   useEffect(() => {
     setFormData(initialData);
   }, [initialData]);
@@ -17,15 +18,19 @@ const EditModal = ({ isOpen, onClose, onSave, initialData }) => {
     if (isSaving) {
       const saveData = async () => {
         try {
-          // Validar se a participação excede 100%
-          if (formData.participation > 100) {
-            throw new Error('A participação não pode exceder 100%.');
+          const updatedParticipationValue = parseFloat(formData.participation);
+          const newTotalParticipation = totalParticipation - parseFloat(initialData.participation) + updatedParticipationValue;
+
+          if (newTotalParticipation > 100) {
+            throw new Error('A participação total não pode exceder 100%.');
           }
+
           await updateParticipation(formData._id, formData);
           onSave(formData);
           setSaveSuccess(true);
         } catch (error) {
           console.error("Erro in update participation:", error.message);
+          setErrorMessage(error.message);
           setSaveSuccess(false);
         } finally {
           setIsSaving(false);
@@ -33,9 +38,9 @@ const EditModal = ({ isOpen, onClose, onSave, initialData }) => {
       };
       saveData();
     }
-  }, [isSaving, formData, onSave, updateParticipation]);
+  }, [isSaving, formData, onSave, totalParticipation, initialData, updateParticipation]);
 
-  //Handles
+  // Handles
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevFormData => ({
@@ -58,9 +63,19 @@ const EditModal = ({ isOpen, onClose, onSave, initialData }) => {
     }
   };
 
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage(null);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
   if (!isOpen) return null;
 
-  //Componente
+  // Componente
   return (
     <ModalOverlay>
       <ModalContainer>
@@ -105,6 +120,11 @@ const EditModal = ({ isOpen, onClose, onSave, initialData }) => {
             </Button>
           </ModalFooter>
         </form>
+        {errorMessage && (
+          <FloatingMessage type="error">
+            {errorMessage}
+          </FloatingMessage>
+        )}
       </ModalContainer>
     </ModalOverlay>
   );

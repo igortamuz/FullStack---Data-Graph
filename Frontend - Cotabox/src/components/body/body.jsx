@@ -59,10 +59,10 @@ function Body() {
     fetchData();
   }, [getParticipation]);
 
-  //Calcula a soma total
+  // Calcula a soma total
   const totalParticipation = participationData.reduce((sum, item) => sum + item.participation, 0);
 
-  //Handles
+  // Handles
   const handleDelete = async (id) => {
     setLoadingDeleteId(id);
     try {
@@ -79,7 +79,7 @@ function Body() {
       setLoadingDeleteId(null);
     }
   };
-  
+
   const handleEdit = (id) => {
     const item = participationData.find(dataItem => dataItem._id === id._id);
     if (item) {
@@ -154,7 +154,7 @@ function Body() {
     }]
   };
 
-  //useEffect
+  // useEffect
   useEffect(() => {
     if (currentEditData !== null) {
       setIsModalOpen(true);
@@ -220,6 +220,7 @@ function Body() {
           onClose={() => setIsModalOpen(false)}
           onSave={handleSave}
           initialData={currentEditData}
+          totalParticipation={totalParticipation}
         />
       </BodyContainer>
     </>
